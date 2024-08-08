@@ -30,8 +30,24 @@ async function findPosts(user_id) {
   */
 }
 
-function find() {
-  return db('users')
+async function find() {
+  const rows = await db('users as u')
+  .leftJoin('posts as p', 'u.id', '=', 'p.user_id')
+  .count('p.id as post_count')
+  .groupBy('u.id')
+  .select('u.id as user_id', 'username')
+  return rows
+  
+  
+
+  // select 
+//     u.id as user_id,
+//     username,
+//     count(p.id) as post_count
+// from users as u
+// left join posts as p
+//     on u.id = p.user_id
+//     group by u.id;
   /*
     Improve so it resolves this structure:
 
@@ -51,8 +67,7 @@ function find() {
   */
 }
 
-function findById(id) {
-  return db('users').where({ id }).first()
+async function findById(id) {
   /*
     Improve so it resolves this structure:
 
@@ -68,6 +83,29 @@ function findById(id) {
       ]
     }
   */
+    const rows = await db('users as u')
+    .leftJoin('posts as p', 'u.id', 'p.user_id')
+    .select(
+      'u.id as user_id',
+      'u.username',
+      'p.id as post_id',
+      'p.contents',
+    )
+    .where('u.id', id)
+  let result = { posts: [] }
+  for (let record of rows) {
+    if (!result.username) {
+      result.user_id = record.user_id
+      result.username = record.username
+    }
+    if (record.post_id) {
+      result.posts.push({
+        contents: record.contents,
+        post_id: record.post_id,
+      })
+    }
+  }
+  return result
 }
 
 function add(user) {
